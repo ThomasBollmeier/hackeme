@@ -1,18 +1,21 @@
-from komparse.grammar import Grammar
+from komparse.grammar import Grammar as BaseGrammar
 from komparse.translators import *
 from komparse.parser import Parser
 from komparse.ast import Ast
 
-class HackemeGrammar(Grammar):
+class Grammar(BaseGrammar):
     
     def __init__(self):
         
-        Grammar.__init__(self)
+        BaseGrammar.__init__(self)
         
         self._init_tokens()
         self._init_rules()
         
     def _init_tokens(self):
+        
+        self.add_comment(';', '\n')
+        self.add_comment('#|', '|#')
 
         self.add_keyword('define')
         self.add_keyword('if')
@@ -22,20 +25,16 @@ class HackemeGrammar(Grammar):
         
         self.add_token('IDENT', '[a-z][a-z0-9]*(-[a-z0-9]+)*')
         self.add_token('NUMBER', '\d+')
+        self.add_token('BOOLEAN', '#t(rue)?|#f(alse)?')
         
     def _init_rules(self):
         
         self.rule('start',
                   Many(
                     OneOf(
-                     Rule('special_form'),
+                     Rule('definition'),
                      Rule('expr'))),
                   is_root=True)
-        
-        self.rule('special_form',
-                  OneOf(
-                    Rule('definition'),
-                    Rule('if_expr')))
         
         self.rule('definition',
                   OneOf(
@@ -60,19 +59,25 @@ class HackemeGrammar(Grammar):
                     TokenType('RPAR'),
                     TokenType('RPAR')))
         
-        self.rule('if_expr',
-                  Sequence(
-                    TokenType('LPAR'),
-                    TokenType('IF'),
-                    TokenType('RPAR')))
-        
         self.rule('expr',
                   OneOf(
                     Rule('if_expr'),
                     Rule('call'),
                     TokenType('IDENT'),
-                    TokenType('NUMBER')))
-
+                    TokenType('NUMBER'),
+                    TokenType('BOOLEAN')))
+ 
+        self.rule('if_expr',
+                  Sequence(
+                    TokenType('LPAR'),
+                    TokenType('IF'),
+                    TokenType('LPAR'),
+                    Rule('expr', 'test'),
+                    TokenType('RPAR'),
+                    Rule('expr', 'consequent'),
+                    Rule('expr', 'alternate'),
+                    TokenType('RPAR')))
+ 
         self.rule('call',
                   Sequence(
                     TokenType('LPAR'),
@@ -82,19 +87,3 @@ class HackemeGrammar(Grammar):
                     Many(Rule('expr', 'arg')),
                     TokenType('RPAR')))
         
-        
-if __name__ == "__main__":
-    
-    code = """
-    (define my-answer 42)
-    (define (this-is-a-function a-param))
-    (this-is-a-function 23 some-arg)
-    """
-    
-    parser = Parser(HackemeGrammar())
-    
-    ast = parser.parse(code)
-    if ast:
-        print(ast.to_xml())
-    else:
-        print(parser.error())
