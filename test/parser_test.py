@@ -11,10 +11,9 @@ if __name__ == "__main__":
     (if (#true)
         result
         (my-func first-arg result))
-    #|
     (define (this-is-a-function a-param))
     (this-is-a-function 23)
-    |#
+    '(1 2 3 (4 5 (7 8 9)))
     """
     
     parser = make_parser()
