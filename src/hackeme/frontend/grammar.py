@@ -24,7 +24,8 @@ class Grammar(BaseGrammar):
         self.add_token('LPAR', '\(')
         self.add_token('RPAR', '\)')
         
-        self.add_token('IDENT', '[a-z][a-z0-9]*(-[a-z0-9]+)*')
+        self.add_token('IDENT', '[a-z][a-z0-9]*(-[a-z0-9]+)*[!?]?')
+        self.add_token('VARARG', '[a-z][a-z0-9]*(-[a-z0-9]+)*\*')
         self.add_token('NUMBER', '\d+')
         self.add_token('BOOLEAN', '#t(rue)?|#f(alse)?')
         
@@ -60,6 +61,7 @@ class Grammar(BaseGrammar):
                     TokenType('LPAR'),
                     TokenType('IDENT', 'name'),
                     Many(TokenType('IDENT', 'param')),
+                    Optional(TokenType('VARARG', 'vararg')),
                     TokenType('RPAR'),
                     TokenType('RPAR')))
         self.set_ast_transform('fundef', self._fundef)
@@ -147,6 +149,10 @@ class Grammar(BaseGrammar):
         param_nodes = ast.find_children_by_id('param')
         for param_node in param_nodes:
             params.add_child(Ast('parameter', param_node.value))
+        vararg = ast.find_children_by_id('vararg')
+        if vararg:
+            vararg = vararg[0]
+            params.add_child(Ast('var', vararg.value[:-1]))
         return ret
     
     def _if_expr(self, ast):
