@@ -16,19 +16,14 @@ class ParserTest(unittest.TestCase):
         self.parser = None
     
     def test_ok(self):
-        
-        code = """
-        (define my-answer 42) ; the answer to everything
-        (if (#true)
-            result
-            (my-func first-arg result))
-        (define (this-is-a-function a-param))
-        (define (writeln words*))
-        (define (even? n))
-        '((this-is-a-function 23) 1 2 3 (4 5 (7 8 9)))
-        """
-        
+
+        f = open("demo.hackeme")
+        code = f.read()
+        f.close()
+       
         ast = self.parser.parse(code)
+        
+        print(self.parser.error())
         
         self.assertTrue(ast)
         

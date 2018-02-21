@@ -23,6 +23,8 @@ class Grammar(BaseGrammar):
         self.add_token('LIST_BEGIN', "'\(")
         self.add_token('LPAR', '\(')
         self.add_token('RPAR', '\)')
+        self.add_token('PLUS', '\+')
+        self.add_token('MINUS', '\-')
         
         self.add_token('IDENT', '[a-z][a-z0-9]*(-[a-z0-9]+)*[!?]?')
         self.add_token('VARARG', '[a-z][a-z0-9]*(-[a-z0-9]+)*\*')
@@ -63,6 +65,10 @@ class Grammar(BaseGrammar):
                     Many(TokenType('IDENT', 'param')),
                     Optional(TokenType('VARARG', 'vararg')),
                     TokenType('RPAR'),
+                    Many(
+                        Rule('definition', 'localdef')),
+                    OneOrMore(
+                        Rule('expr', 'body')),
                     TokenType('RPAR')))
         self.set_ast_transform('fundef', self._fundef)
                 
@@ -85,9 +91,7 @@ class Grammar(BaseGrammar):
                   Sequence(
                     TokenType('LPAR'),
                     TokenType('IF'),
-                    TokenType('LPAR'),
                     Rule('expr', 'test'),
-                    TokenType('RPAR'),
                     Rule('expr', 'consequent'),
                     Rule('expr', 'alternate'),
                     TokenType('RPAR')))
@@ -98,10 +102,17 @@ class Grammar(BaseGrammar):
                     TokenType('LPAR'),
                     OneOf(
                         TokenType('IDENT', 'callee'),
-                        Rule('call', 'callee')),
+                        Rule('call', 'callee'),
+                        Rule('operator', 'callee')),
                     Many(Rule('expr', 'arg')),
                     TokenType('RPAR')))
         self.set_ast_transform('call', self._call)
+        
+        self.rule('operator',
+                  OneOf(
+                    TokenType('PLUS'),
+                    TokenType('MINUS')))
+        self.set_ast_transform('operator', self._operator)
  
         self.rule('boolean', TokenType('BOOLEAN'))
         self.set_ast_transform('boolean', self._boolean)
@@ -153,6 +164,12 @@ class Grammar(BaseGrammar):
         if vararg:
             vararg = vararg[0]
             params.add_child(Ast('var', vararg.value[:-1]))
+        localdefs = Ast('localdefs')
+        ret.add_child(localdefs)
+        localdefs.add_children_by_id(ast, 'localdef')
+        body = Ast('body')
+        ret.add_child(body)
+        body.add_children_by_id(ast, 'body')
         return ret
     
     def _if_expr(self, ast):
@@ -176,6 +193,12 @@ class Grammar(BaseGrammar):
         args = Ast('arguments')
         ret.add_child(args)
         args.add_children_by_id(ast, 'arg')
+        return ret
+    
+    def _operator(self, ast):
+        ret = Ast('operator')
+        op = ast.get_children()[0].value
+        ret.set_attr('value', op)
         return ret
     
     def _boolean(self, ast):
