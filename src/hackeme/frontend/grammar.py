@@ -1,5 +1,5 @@
 from komparse.grammar import Grammar as BaseGrammar
-from komparse.translators import *
+from komparse.translators import OneOrMore, Many, Optional, Sequence, OneOf
 from komparse.parser import Parser
 from komparse.ast import Ast
 
@@ -30,109 +30,108 @@ class Grammar(BaseGrammar):
         self.add_token('VARARG', '[a-z][a-z0-9]*(-[a-z0-9]+)*\*')
         self.add_token('NUMBER', '\d+')
         self.add_token('BOOLEAN', '#t(rue)?|#f(alse)?')
+        self.add_token('STRING', r"\"([^\\\"]|\\\")*\"")
         
     def _init_rules(self):
         
         self.rule('start',
                   Many(
                     OneOf(
-                     Rule('definition'),
-                     Rule('expr'))),
+                     self.definition(),
+                     self.expr())),
                   is_root=True)
         self.set_ast_transform('start', self._start)
         
         self.rule('definition',
                   OneOf(
-                    Rule('vardef'),
-                    Rule('fundef')))
+                    self.vardef(),
+                    self.fundef()))
         self.set_ast_transform('definition', lambda ast: ast.get_children()[0])
         
         self.rule('vardef',
                   Sequence(
-                    TokenType('LPAR'),
-                    TokenType('DEFINE'),
-                    TokenType('IDENT', 'name'),
-                    Rule('expr', 'value'),
-                    TokenType('RPAR')))
+                    self.LPAR(),
+                    self.DEFINE(),
+                    self.IDENT('name'),
+                    self.expr('value'),
+                    self.RPAR()))
         self.set_ast_transform('vardef', self._vardef)
 
         self.rule('fundef',
                   Sequence(
-                    TokenType('LPAR'),
-                    TokenType('DEFINE'),
-                    TokenType('LPAR'),
-                    TokenType('IDENT', 'name'),
-                    Many(TokenType('IDENT', 'param')),
-                    Optional(TokenType('VARARG', 'vararg')),
-                    TokenType('RPAR'),
-                    Many(
-                        Rule('definition', 'localdef')),
-                    OneOrMore(
-                        Rule('expr', 'body')),
-                    TokenType('RPAR')))
+                    self.LPAR(),
+                    self.DEFINE(),
+                    self.LPAR(),
+                    self.IDENT('name'),
+                    Many(self.IDENT('param')),
+                    Optional(self.VARARG('vararg')),
+                    self.RPAR(),
+                    Many(self.definition('localdef')),
+                    OneOrMore(self.expr('body')),
+                    self.RPAR()))
         self.set_ast_transform('fundef', self._fundef)
                 
         self.rule('expr',
                   OneOf(
-                    Rule('no_list'),
-                    Rule('list')))
+                    self.no_list(),
+                    self.list()))
         self.set_ast_transform('expr', lambda ast: ast.get_children()[0])
         
         self.rule('no_list',
                   OneOf(
-                    Rule('if_expr'),
-                    Rule('call'),
-                    TokenType('IDENT'),
-                    TokenType('NUMBER'),
-                    Rule('boolean')))
+                    self.if_expr(),
+                    self.call(),
+                    self.IDENT(),
+                    self.NUMBER(),
+                    self.boolean(),
+                    self.STRING()))
         self.set_ast_transform('no_list', lambda ast: ast.get_children()[0])
  
         self.rule('if_expr',
                   Sequence(
-                    TokenType('LPAR'),
-                    TokenType('IF'),
-                    Rule('expr', 'test'),
-                    Rule('expr', 'consequent'),
-                    Rule('expr', 'alternate'),
-                    TokenType('RPAR')))
+                    self.LPAR(),
+                    self.IF(),
+                    self.expr('test'),
+                    self.expr('consequent'),
+                    self.expr('alternate'),
+                    self.RPAR()))
         self.set_ast_transform('if_expr', self._if_expr)
  
         self.rule('call',
                   Sequence(
-                    TokenType('LPAR'),
+                    self.LPAR(),
                     OneOf(
-                        TokenType('IDENT', 'callee'),
-                        Rule('call', 'callee'),
-                        Rule('operator', 'callee')),
-                    Many(Rule('expr', 'arg')),
-                    TokenType('RPAR')))
+                        self.IDENT('callee'),
+                        self.call('callee'),
+                        self.operator('callee')),
+                    Many(self.expr('arg')),
+                    self.RPAR()))
         self.set_ast_transform('call', self._call)
         
         self.rule('operator',
                   OneOf(
-                    TokenType('PLUS'),
-                    TokenType('MINUS')))
+                    self.PLUS(),
+                    self.MINUS()))
         self.set_ast_transform('operator', self._operator)
  
-        self.rule('boolean', TokenType('BOOLEAN'))
+        self.rule('boolean', self.BOOLEAN())
         self.set_ast_transform('boolean', self._boolean)
         
         self.rule('list',
                   Sequence(
-                    TokenType('LIST_BEGIN'),
-                    OneOrMore(
-                        Rule('list_item', 'li')),
-                    TokenType('RPAR')))
+                    self.LIST_BEGIN(),
+                    OneOrMore(self.list_item('li')),
+                    self.RPAR()))
         self.set_ast_transform('list', self._list)
         
         self.rule('list_item',
                   OneOf(
                     Sequence(
-                      TokenType('LPAR'),
+                      self.LPAR(),
                       OneOrMore(
-                          Rule('list_item', 'li')),
-                      TokenType('RPAR')),
-                    Rule('no_list', 'single')))
+                          self.list_item('li')),
+                      self.RPAR()),
+                    self.no_list('single')))
         self.set_ast_transform('list_item', self._list_item)
         
     # AST transformations:

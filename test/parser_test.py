@@ -30,7 +30,7 @@ class ParserTest(unittest.TestCase):
         print(ast.to_xml())
 
         vardefs = ast.find_children_by_name('vardef')
-        self.assertEqual(len(vardefs), 1)
+        self.assertEqual(len(vardefs), 2)
         
         answer = int(vardefs[0].get_children()[0].value)
         self.assertEqual(answer, 42)
