@@ -1,4 +1,5 @@
 from .symbol_table import SymbolTable
+from .symtab_entry import VarEntry, FuncEntry
 
 class Pass1(object):
     
@@ -8,14 +9,18 @@ class Pass1(object):
             if child.name == "vardef":
                 self._walk_vardef(child)
             elif child.name == "fundef":
-                pass
+                self._walk_fundef(child)
             else:
                 pass
             
     def _walk_vardef(self, vardef):
         var_name = vardef.get_attr('name')
-        value = None # <-- TDOD: evaluate
-        self._symtab.add(var_name, SymbolTable.VAR, value)
+        self._symtab.add(VarEntry(var_name))
+        
+    def _walk_fundef(self, fundef):
+        fun_name = fundef.get_attr('name')
+        self._symtab.add(FuncEntry(fun_name))
+        
 
 class Analyzer(object):
     
