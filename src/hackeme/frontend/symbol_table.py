@@ -1,17 +1,7 @@
 class SymbolTable(object):
     
-    _next_id = 1
-    _sym_tabs = {}
-    
-    @staticmethod
-    def find(id_):
-        return SymbolTable._sym_tabs[id_]
-    
-    def __init__(self, parent=None):
-        self._id = SymbolTable._next_id
-        SymbolTable._next_id += 1
-        SymbolTable._sym_tabs[self._id] = self
-        
+    def __init__(self, id_, parent=None):
+        self._id = id_
         self._parent = parent
         self._symbols = {}
         
@@ -24,13 +14,16 @@ class SymbolTable(object):
     def add(self, entry):
         self._symbols[entry.get_name()] = entry
         
-    def get_entry(self, name):
-        symtab = self
-        while symtab:
-            if name in symtab._symbols:
-                return symtab._symbols[name]
-            symtab = symtab._parent
-        return None
+    def get_entry(self, name, search_in_parents=True):
+        if search_in_parents:
+            symtab = self
+            while symtab:
+                if name in symtab._symbols:
+                    return symtab._symbols[name]
+                symtab = symtab._parent
+            return None
+        else:
+            return (name in self._symbols) and self._symbols[name] or None
     
     def get_defining_scope(self, name):
         symtab = self
