@@ -3,7 +3,11 @@
     result
     (my-func first-arg result))
 (define (this-is-a-function a-param)
-    (do-something-with a-param))
+    (define local-var 23)
+    (define (helper a-param)
+        (define ego "Thomas")
+        (do-something))
+    (helper a-param))
 (define (writeln words*)
     (do-stuff))
 (define (even? n)

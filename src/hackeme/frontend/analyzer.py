@@ -22,19 +22,32 @@ class Pass1(object):
         self._set_defining_scope(vardef)
         
     def _walk_fundef(self, fundef):
+        
         fun_name = fundef.get_attr('name')
+        
         self._scope.add(FuncEntry(fun_name, self._var_kind()))
         self._set_defining_scope(fundef)
+        self._scope = self._scope_mgr.new_scope(self._scope)
+        
         for child in fundef.get_children():
             if child.name == "parameters":
                 self._walk_params(child)
+            elif child.name == "localdefs":
+                self._walk_localdefs(child)
+        
+        self._scope = self._scope.get_parent()
                 
     def _walk_params(self, params):
-        self._scope = self._scope_mgr.new_scope(self._scope)
         for param in params.get_children():
             self._scope.add(SymtabEntry(param.value, Kind.PARAM))
             self._set_defining_scope(param)
-        self._scope = self._scope.get_parent()
+            
+    def _walk_localdefs(self, localdefs):
+        for child in localdefs.get_children():
+            if child.name == "vardef":
+                self._walk_vardef(child)
+            elif child.name == "fundef":
+                self._walk_fundef(child)
         
     def _var_kind(self):
         if self._scope.get_parent() is not None:
