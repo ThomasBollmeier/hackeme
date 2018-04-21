@@ -19,12 +19,24 @@ class Grammar(BaseGrammar):
 
         self.add_keyword('define')
         self.add_keyword('if')
+        self.add_keyword('cond')
         
         self.add_token('LIST_BEGIN', "'\(")
         self.add_token('LPAR', '\(')
         self.add_token('RPAR', '\)')
+        self.add_token('LSQB', '\[')
+        self.add_token('RSQB', '\]')
         self.add_token('PLUS', '\+')
         self.add_token('MINUS', '\-')
+        self.add_token('MULT', '\*')
+        self.add_token('DIV', '/')
+        self.add_token('MOD', '%')
+        self.add_token('EQ', '=')
+        self.add_token('NE', '<>')
+        self.add_token('GT', '>')
+        self.add_token('GE', '>=')
+        self.add_token('LT', '<')
+        self.add_token('LE', '<=')
         
         self.add_token('IDENT', '[a-z][a-z0-9]*(-[a-z0-9]+)*[!?]?')
         self.add_token('VARARG', '[a-z][a-z0-9]*(-[a-z0-9]+)*\*')
@@ -80,6 +92,7 @@ class Grammar(BaseGrammar):
         self.rule('no_list',
                   OneOf(
                     self.if_expr(),
+                    self.cond_expr(),
                     self.call(),
                     self.IDENT(),
                     self.NUMBER(),
@@ -96,6 +109,22 @@ class Grammar(BaseGrammar):
                     self.expr('alternate'),
                     self.RPAR()))
         self.set_ast_transform('if_expr', self._if_expr)
+        
+        self.rule('cond_expr',
+                  Sequence(
+                    self.LPAR(),
+                    self.COND(),
+                    OneOrMore(self.cond_branch('branch')),
+                    self.RPAR()))
+        self.set_ast_transform('cond_expr', self._cond_expr)
+        
+        self.rule('cond_branch',
+                  Sequence(
+                    self.LSQB(),
+                    self.expr('test'),
+                    self.expr('consequent'),
+                    self.RSQB()))
+        self.set_ast_transform('cond_branch', self._cond_branch)
  
         self.rule('call',
                   Sequence(
@@ -111,7 +140,16 @@ class Grammar(BaseGrammar):
         self.rule('operator',
                   OneOf(
                     self.PLUS(),
-                    self.MINUS()))
+                    self.MINUS(),
+                    self.MULT(),
+                    self.DIV(),
+                    self.MOD(),
+                    self.EQ(),
+                    self.NE(),
+                    self.GT(),
+                    self.GE(),
+                    self.LT(),
+                    self.LE()))
         self.set_ast_transform('operator', self._operator)
  
         self.rule('boolean', self.BOOLEAN())
@@ -182,6 +220,21 @@ class Grammar(BaseGrammar):
         alternate = Ast('alternate')
         ret.add_child(alternate)
         alternate.add_children_by_id(ast, 'alternate')
+        return ret
+    
+    def _cond_expr(self, ast):
+        ret = Ast('cond')
+        ret.add_children_by_id(ast, 'branch')
+        return ret
+    
+    def _cond_branch(self, ast):
+        ret = Ast('branch')
+        test = Ast('test')
+        ret.add_child(test)
+        test.add_children_by_id(ast, 'test')
+        consequent = Ast('consequent')
+        ret.add_child(consequent)
+        consequent.add_children_by_id(ast, 'consequent')
         return ret
     
     def _call(self, ast):

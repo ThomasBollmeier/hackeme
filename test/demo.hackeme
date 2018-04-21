@@ -16,3 +16,6 @@
 (+ 41 1)
 (define blank "")
 (writeln "Say \"Hello\" to the world!")
+(cond
+    [(= x (% (* 7 6) 43)) "answer"]
+    [#t "something"])
