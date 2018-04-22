@@ -27,9 +27,12 @@ class AnalyzerTest(unittest.TestCase):
         ast = self.parser.parse(code)
         self.assertTrue(ast)
         
-        self.analyzer.analyze(ast)
-        
-        print(ast.to_xml())
+        if self.analyzer.analyze(ast):
+            print(ast.to_xml())
+        else:
+            errors = self.analyzer.get_errors()
+            for error in errors:
+                print(error)
 
 
 if __name__ == "__main__":

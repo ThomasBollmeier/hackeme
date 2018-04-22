@@ -6,8 +6,8 @@ class ScopeManager(object):
         self._next_id = 1
         self._scopes = {}
     
-    def new_scope(self, parent=None):
-        scope = SymbolTable(self._next_id, parent)
+    def new_scope(self, parent=None, name=""):
+        scope = SymbolTable(self._next_id, parent, name)
         self._scopes[self._next_id] = scope
         self._next_id += 1
         return scope

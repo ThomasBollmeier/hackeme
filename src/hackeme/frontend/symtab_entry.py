@@ -39,3 +39,30 @@ class FuncEntry(SymtabEntry):
     
     def __init__(self, name, kind):
         SymtabEntry.__init__(self, name, kind, TypeCatg.FUNCTION)
+        self._num_params = 0
+        self._has_var_arg = False
+        
+    def inc_num_params(self):
+        self._num_params += 1
+        
+    def get_num_params(self):
+        return self._num_params
+        
+    def set_var_arg_support(self):
+        self._has_var_arg = True
+        
+        
+class ParamEntry(SymtabEntry):
+    
+    def __init__(self, func_entry, name, type_catg = TypeCatg.UNKNOWN):
+        SymtabEntry.__init__(self, name, Kind.PARAM, type_catg)
+        self._func = func_entry
+        self._param_nun = self._func.get_num_params()
+        self._func.inc_num_params()
+        
+        
+class VarArgEntry(ParamEntry):
+    
+    def __init__(self, func_entry, name):
+        ParamEntry.__init__(self, func_entry, name, TypeCatg.LIST)
+        self._func.set_var_arg_support()

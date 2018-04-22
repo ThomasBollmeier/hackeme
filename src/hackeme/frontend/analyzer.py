@@ -1,71 +1,93 @@
 from .scope_manager import ScopeManager
-from .symtab_entry import Kind, SymtabEntry, FuncEntry
+from .symtab_entry import Kind, SymtabEntry, FuncEntry, \
+    ParamEntry, VarArgEntry
 
-class Pass1(object):
-    
-    def walk_root(self, scope, scope_mgr, ast):
-        
+class DefinitionFinder(object):
+
+    def walk_ast(self, ast, scope, scope_mgr):
         self._scope = scope
         self._scope_mgr = scope_mgr
-        
-        for child in ast.get_children():
-            if child.name == "vardef":
-                self._walk_vardef(child)
-            elif child.name == "fundef":
-                self._walk_fundef(child)
-            else:
-                pass
-            
-    def _walk_vardef(self, vardef):
-        var_name = vardef.get_attr('name')
-        self._scope.add(SymtabEntry(var_name, self._var_kind()))
-        self._set_defining_scope(vardef)
-        
-    def _walk_fundef(self, fundef):
-        
-        fun_name = fundef.get_attr('name')
-        
-        self._scope.add(FuncEntry(fun_name, self._var_kind()))
-        self._set_defining_scope(fundef)
-        self._scope = self._scope_mgr.new_scope(self._scope)
-        
-        for child in fundef.get_children():
-            if child.name == "parameters":
-                self._walk_params(child)
-            elif child.name == "localdefs":
-                self._walk_localdefs(child)
-        
-        self._scope = self._scope.get_parent()
-                
-    def _walk_params(self, params):
-        for param in params.get_children():
-            self._scope.add(SymtabEntry(param.value, Kind.PARAM))
-            self._set_defining_scope(param)
-            
-    def _walk_localdefs(self, localdefs):
-        for child in localdefs.get_children():
-            if child.name == "vardef":
-                self._walk_vardef(child)
-            elif child.name == "fundef":
-                self._walk_fundef(child)
-        
+        self._curr_func = None
+        ast.set_attr('x-scope', self._scope.get_scope_id())
+        ast.walk(self)
+
+    # Visitor implementation: enter_node, exit_node, visit_node    
+    def enter_node(self, ast):
+        if ast.name == "vardef":
+            name = ast.get_attr('name')
+            self._scope.add(SymtabEntry(name, self._var_kind()))
+        elif ast.name == "fundef":
+            name = ast.get_attr('name')
+            self._curr_func = FuncEntry(name, self._var_kind())
+            self._scope.add(self._curr_func)
+            # a function definition creates a new scope
+            self._scope = self._scope_mgr.new_scope(self._scope, name)
+            ast.set_attr('x-scope', self._scope.get_scope_id())
+    
+    def exit_node(self, ast):
+        if ast.name == "fundef":
+            self._scope = self._scope.get_parent()
+            self._curr_func = None
+    
+    def visit_node(self, ast):
+        if ast.name == "parameter":
+            self._scope.add(ParamEntry(self._curr_func, ast.value))
+        elif ast.name == "var":
+            self._scope.add(VarArgEntry(self._curr_func, ast.value))
+    
     def _var_kind(self):
         if self._scope.get_parent() is not None:
             return Kind.LOCAL_VAR
         else:
             return Kind.GLOBAL_VAR
         
-    def _set_defining_scope(self, ast):
-        ast.set_attr('scope', self._scope.get_scope_id())
+    
+class IdentifierLookup(object):
+    
+    def walk_ast(self, ast, scope_mgr):
+        self._scope_mgr = scope_mgr
+        self._errors = []
+        self._scope_stack = []
+        ast.walk(self)
+        return self._errors
+        
+    def enter_node(self, ast):
+        scope = None
+        if ast.has_attr('x-scope'):
+            scope_id = ast.get_attr('x-scope')
+            scope = self._scope_mgr.find_scope(scope_id)
+        elif self._scope_stack:
+            scope = self._scope_stack[-1]
+        self._scope_stack.append(scope)
+            
+    def exit_node(self, ast):
+        self._scope_stack.pop()
+    
+    def visit_node(self, ast):
+        if ast.name == "IDENT":
+            identifier = ast.value
+            scope = self._scope_stack[-1]
+            def_scope_id = scope.get_defining_scope(identifier)
+            if def_scope_id is not None:
+                ast.set_attr('x-from-scope', def_scope_id)
+            else:
+                error = "{}: '{}' is unknown".format(scope.get_full_name(), identifier)
+                self._errors.append(error)
+        
 
 class Analyzer(object):
     
     def __init__(self):
         self._scope_mgr = ScopeManager()
+        self._errors = []
     
     def analyze(self, ast):
-        
-        global_scope = self._scope_mgr.new_scope()
-        
-        Pass1().walk_root(global_scope, self._scope_mgr, ast)
-        
+        global_scope = self._scope_mgr.new_scope(name="global")
+        DefinitionFinder().walk_ast(ast, global_scope, self._scope_mgr)
+        self._errors = IdentifierLookup().walk_ast(ast, self._scope_mgr)
+        if self._errors:
+            return False
+        return True
+       
+    def get_errors(self):
+        return self._errors

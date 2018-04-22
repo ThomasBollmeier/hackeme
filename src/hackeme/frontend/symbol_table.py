@@ -1,8 +1,9 @@
 class SymbolTable(object):
     
-    def __init__(self, id_, parent=None):
+    def __init__(self, id_, parent=None, name=""):
         self._id = id_
         self._parent = parent
+        self._name = name
         self._symbols = {}
         
     def get_scope_id(self):
@@ -10,6 +11,14 @@ class SymbolTable(object):
         
     def get_parent(self):
         return self._parent
+    
+    def get_full_name(self):
+        full_name = self._name
+        symtab = self._parent
+        while symtab:
+            full_name = symtab._name + "/" + full_name
+            symtab = symtab._parent
+        return full_name
         
     def add(self, entry):
         self._symbols[entry.get_name()] = entry

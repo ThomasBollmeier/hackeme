@@ -1,21 +1,23 @@
 (define my-answer 42) ; the answer to everything
+(define result #true)
 (if #true
     result
-    (my-func first-arg result))
-(define (this-is-a-function a-param)
+    (this-is-a-function "data" result))
+(define (this-is-a-function a-param a-snd-param)
     (define local-var 23)
     (define (helper a-param)
         (define ego "Thomas")
-        (do-something))
+        a-param)
     (helper a-param))
 (define (writeln words*)
-    (do-stuff))
+    #false)
 (define (even? n)
     #false)
-'((this-is-a-function-call 23) 1 2 3 (4 5 (7 8 9)))
+'((this-is-a-function 12 23) 1 2 3 (4 5 (7 8 9)))
 (+ 41 1)
 (define blank "")
 (writeln "Say \"Hello\" to the world!")
+(define x 42)
 (cond
     [(= x (% (* 7 6) 43)) "answer"]
     [#t "something"])
