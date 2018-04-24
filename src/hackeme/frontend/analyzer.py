@@ -41,17 +41,14 @@ class DefinitionFinder(object):
         else:
             return Kind.GLOBAL_VAR
         
-    
-class IdentifierLookup(object):
-    
-    def walk_ast(self, ast, scope_mgr):
-        self._scope_mgr = scope_mgr
-        self._errors = []
-        self._scope_stack = []
-        ast.walk(self)
-        return self._errors
         
-    def enter_node(self, ast):
+class AstWalker(object):
+    
+    def __init__(self, scope_mgr):
+        self._scope_mgr = scope_mgr
+        self._scope_stack = []
+        
+    def push_scope(self, ast):
         scope = None
         if ast.has_attr('x-scope'):
             scope_id = ast.get_attr('x-scope')
@@ -59,9 +56,26 @@ class IdentifierLookup(object):
         elif self._scope_stack:
             scope = self._scope_stack[-1]
         self._scope_stack.append(scope)
+
+    def pop_scope(self):
+        self._scope_stack.pop()
+        
+    
+class IdentifierLookup(AstWalker):
+    
+    def __init__(self, scope_mgr):
+        AstWalker.__init__(self, scope_mgr)
+    
+    def walk_ast(self, ast):
+        self._errors = []
+        ast.walk(self)
+        return self._errors
+        
+    def enter_node(self, ast):
+        self.push_scope(ast)
             
     def exit_node(self, ast):
-        self._scope_stack.pop()
+        self.pop_scope()
     
     def visit_node(self, ast):
         if ast.name == "IDENT":
@@ -73,7 +87,40 @@ class IdentifierLookup(object):
             else:
                 error = "{}: '{}' is unknown".format(scope.get_full_name(), identifier)
                 self._errors.append(error)
+                
+                
+class CallChecker(AstWalker):
+    
+    def __init__(self, scope_mgr):
+        AstWalker.__init__(self, scope_mgr)
+    
+    def walk_ast(self, ast):
+        self._call_stack = []
+        self._errors = []
+        ast.walk(self)
+        return self._errors
         
+    def enter_node(self, ast):
+        self.push_scope(ast)
+        if ast.name == "call":
+            callee, args = ast.get_children()
+            fn = callee.get_children()[0]
+            if fn.name == "IDENT":
+                func_name = fn.value
+                scope = self._scope_stack[-1]
+                func_entry = scope.get_entry(func_name)
+                if isinstance(func_entry, FuncEntry):
+                    pass
+                else:
+                    error = "{}: '{}' is not a function".format(scope.get_full_name(), func_name)
+                    self._errors.append(error)
+            
+    def exit_node(self, ast):
+        self.pop_scope()
+        
+    def visit_node(self, ast):
+        pass
+    
 
 class Analyzer(object):
     
@@ -84,7 +131,8 @@ class Analyzer(object):
     def analyze(self, ast):
         global_scope = self._scope_mgr.new_scope(name="global")
         DefinitionFinder().walk_ast(ast, global_scope, self._scope_mgr)
-        self._errors = IdentifierLookup().walk_ast(ast, self._scope_mgr)
+        self._errors = IdentifierLookup(self._scope_mgr).walk_ast(ast)
+        self._errors += CallChecker(self._scope_mgr).walk_ast(ast)
         if self._errors:
             return False
         return True
