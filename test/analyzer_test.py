@@ -33,7 +33,26 @@ class AnalyzerTest(unittest.TestCase):
             errors = self.analyzer.get_errors()
             for error in errors:
                 print(error)
+                
+    def test_err(self):
 
+        f = open("demo_err.hackeme")
+        code = f.read()
+        f.close()
+        
+        ast = self.parser.parse(code)
+        self.assertTrue(ast)
+        
+        result = self.analyzer.analyze(ast)
+        self.assertFalse(result)
+       
+        errors = self.analyzer.get_errors()
+        self.assertEqual(len(errors), 4)
+        
+        for error in errors:
+            print(error)
+            
+        
 
 if __name__ == "__main__":
     

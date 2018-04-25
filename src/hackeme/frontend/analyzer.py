@@ -103,17 +103,7 @@ class CallChecker(AstWalker):
     def enter_node(self, ast):
         self.push_scope(ast)
         if ast.name == "call":
-            callee, args = ast.get_children()
-            fn = callee.get_children()[0]
-            if fn.name == "IDENT":
-                func_name = fn.value
-                scope = self._scope_stack[-1]
-                func_entry = scope.get_entry(func_name)
-                if isinstance(func_entry, FuncEntry):
-                    pass
-                else:
-                    error = "{}: '{}' is not a function".format(scope.get_full_name(), func_name)
-                    self._errors.append(error)
+            self._check_call(ast)
             
     def exit_node(self, ast):
         self.pop_scope()
@@ -121,6 +111,33 @@ class CallChecker(AstWalker):
     def visit_node(self, ast):
         pass
     
+    def _check_call(self, ast):
+        callee, args = ast.get_children()
+        fn = callee.get_children()[0]
+        if fn.name == "IDENT" and fn.has_attr('x-from-scope'):
+            func_name = fn.value
+            scope = self._scope_stack[-1]
+            func_entry = scope.get_entry(func_name)
+            if isinstance(func_entry, FuncEntry):
+                self._check_arguments(args, func_entry, scope)
+            else:
+                error = "{}: '{}' is not a function".format(scope.get_full_name(), func_name)
+                self._errors.append(error)
+                
+    def _check_arguments(self, args, func_entry, scope):
+        num_args = len(args.get_children())
+        min_num_params = func_entry.get_min_num_params()
+        if min_num_params > num_args:
+            error = "{}: '{}' requires at least {} arguments".format(
+                scope.get_full_name(), func_entry.get_name(), min_num_params)
+            self._errors.append(error)
+        else:
+            max_num_params = func_entry.get_max_num_params()
+            if max_num_params is not None and max_num_params < num_args:
+                error = "{}: '{}' must not be called with more than {} arguments".format(
+                    scope.get_full_name(), func_entry.get_name(), max_num_params)
+                self._errors.append(error)
+                
 
 class Analyzer(object):
     

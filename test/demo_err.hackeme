@@ -1,0 +1,13 @@
+(answ "Test") ;; <-- answ is unknown
+
+(define answer 42)
+(answer "Thomas") ;; <-- answer is not a function
+
+(define (say-hello first-name last-name)
+    (+ first-name last-name))
+(say-hello "Thomas") ;; <-- say-hello requires at least 2 arguments
+(say-hello "One" "Two" "Three") ;; <-- say-hello must not be called with more than 2 arguments
+
+(define (say-hello-to-all first-name last-name others*)
+    #true)
+(say-hello-to-all "One" "Two" "Three" "Four") ;; <-- OK
