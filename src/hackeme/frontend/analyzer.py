@@ -138,6 +138,48 @@ class CallChecker(AstWalker):
                     scope.get_full_name(), func_entry.get_name(), max_num_params)
                 self._errors.append(error)
                 
+                
+class TailPositionFinder(object):
+    
+    def walk_ast(self, ast):
+        ast.walk(self)
+    
+    def enter_node(self, ast):
+        if ast.name == "fundef":
+            self._set_tail_pos_info(ast)
+            
+    def exit_node(self, ast):
+        pass
+        
+    def visit_node(self, ast):
+        pass
+    
+    def _set_tail_pos_info(self, fundef):
+        func_name = fundef.get_attr("name")
+        body = fundef.find_children_by_name("body")[0]
+        last_expr = body.get_children()[-1]
+        self._set_tail_pos_info_in_expr(last_expr, func_name)
+        
+    def _set_tail_pos_info_in_expr(self, expr, func_name):
+        if expr.name == "if_expr":
+            self._set_tail_pos_info_in_if(expr, func_name)
+        elif expr.name == "cond":
+            self._set_tail_pos_info_in_cond(expr, func_name)
+        else:
+            expr.set_attr('x-tail-pos-of', func_name)
+                
+    def _set_tail_pos_info_in_if(self, if_expr, func_name):
+        children = if_expr.get_children()
+        consequent = children[1].get_children()[0]
+        alternate = children[2].get_children()[0]
+        self._set_tail_pos_in_expr(consequent, func_name)
+        self._set_tail_pos_in_expr(alternate, func_name)
+        
+    def _set_tail_pos_info_in_cond(self, cond_expr, func_name):
+        for branch in cond_expr.get_children():
+            consequent = branch.get_children()[1]
+            self._set_tail_pos_info_in_expr(consequent, func_name)
+        
 
 class Analyzer(object):
     
@@ -148,6 +190,7 @@ class Analyzer(object):
     def analyze(self, ast):
         global_scope = self._scope_mgr.new_scope(name="global")
         DefinitionFinder().walk_ast(ast, global_scope, self._scope_mgr)
+        TailPositionFinder().walk_ast(ast)
         self._errors = IdentifierLookup(self._scope_mgr).walk_ast(ast)
         self._errors += CallChecker(self._scope_mgr).walk_ast(ast)
         if self._errors:
