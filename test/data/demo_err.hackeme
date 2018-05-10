@@ -5,8 +5,8 @@
 
 (define (say-hello first-name last-name)
     (+ first-name last-name))
-(say-hello "Thomas") ;; <-- say-hello requires at least 2 arguments
-(say-hello "One" "Two" "Three") ;; <-- say-hello must not be called with more than 2 arguments
+(say-hello "Thomas") ;; <-- no version of say-hello exists that accepts 1 arguments
+(say-hello "One" "Two" "Three") ;; <-- no version of say-hello exists that accepts 3 arguments
 
 (define (say-hello-to-all first-name last-name others*)
     #true)

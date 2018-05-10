@@ -17,7 +17,7 @@ class ParserTest(unittest.TestCase):
     
     def test_ok(self):
 
-        f = open("demo.hackeme")
+        f = open("data/demo.hackeme")
         code = f.read()
         f.close()
        
@@ -30,7 +30,7 @@ class ParserTest(unittest.TestCase):
         print(ast.to_xml())
 
         vardefs = ast.find_children_by_name('vardef')
-        self.assertEqual(len(vardefs), 2)
+        self.assertEqual(len(vardefs), 4)
         
         answer = int(vardefs[0].get_children()[0].value)
         self.assertEqual(answer, 42)

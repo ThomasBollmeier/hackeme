@@ -1,0 +1,7 @@
+(define (say-hello prefix name suffix)
+  #true)
+  
+(define (say-hello name suffix)
+  #true)
+  
+(say-hello "Hallo" "Welt" "!")

@@ -20,7 +20,7 @@ class AnalyzerTest(unittest.TestCase):
     
     def test_ok(self):
 
-        f = open("demo.hackeme")
+        f = open("data/demo.hackeme")
         code = f.read()
         f.close()
        
@@ -36,7 +36,7 @@ class AnalyzerTest(unittest.TestCase):
                 
     def test_err(self):
 
-        f = open("demo_err.hackeme")
+        f = open("data/demo_err.hackeme")
         code = f.read()
         f.close()
         
@@ -52,7 +52,38 @@ class AnalyzerTest(unittest.TestCase):
         for error in errors:
             print(error)
             
+    def test_multi_arities(self):
+
+        f = open("data/mult_arity.hackeme")
+        code = f.read()
+        f.close()
         
+        ast = self.parser.parse(code)
+        self.assertTrue(ast)
+        
+        result = self.analyzer.analyze(ast)
+        self.assertTrue(result)
+       
+        errors = self.analyzer.get_errors()
+        self.assertEqual(len(errors), 0)
+        
+    def test_multi_arities_err(self):
+
+        f = open("data/mult_arity_err.hackeme")
+        code = f.read()
+        f.close()
+        
+        ast = self.parser.parse(code)
+        self.assertTrue(ast)
+        
+        result = self.analyzer.analyze(ast)
+        self.assertFalse(result)
+       
+        errors = self.analyzer.get_errors()
+        self.assertEqual(len(errors), 1)
+        
+        for error in errors:
+            print(error)
 
 if __name__ == "__main__":
     

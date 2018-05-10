@@ -7,7 +7,7 @@ class DefinitionFinder(object):
     def walk_ast(self, ast, scope, scope_mgr):
         self._scope = scope
         self._scope_mgr = scope_mgr
-        self._curr_func = None
+        self._curr_arity = None
         ast.set_attr('x-scope', self._scope.get_scope_id())
         ast.walk(self)
 
@@ -18,8 +18,11 @@ class DefinitionFinder(object):
             self._scope.add(SymtabEntry(name, self._var_kind()))
         elif ast.name == "fundef":
             name = ast.get_attr('name')
-            self._curr_func = FuncEntry(name, self._var_kind())
-            self._scope.add(self._curr_func)
+            func_entry = self._scope.get_entry(name, search_in_parents = False)
+            if not func_entry:
+                func_entry = FuncEntry(name, self._var_kind())
+                self._scope.add(func_entry)
+            self._curr_arity = func_entry.create_arity()
             # a function definition creates a new scope
             self._scope = self._scope_mgr.new_scope(self._scope, name)
             ast.set_attr('x-scope', self._scope.get_scope_id())
@@ -28,13 +31,13 @@ class DefinitionFinder(object):
     def exit_node(self, ast):
         if ast.name == "fundef":
             self._scope = self._scope.get_parent()
-            self._curr_func = None
+            self._curr_arity = None
     
     def visit_node(self, ast):
         if ast.name == "parameter":
-            self._scope.add(ParamEntry(self._curr_func, ast.value))
+            self._scope.add(ParamEntry(self._curr_arity, ast.value))
         elif ast.name == "var":
-            self._scope.add(VarArgEntry(self._curr_func, ast.value))
+            self._scope.add(VarArgEntry(self._curr_arity, ast.value))
     
     def _var_kind(self):
         if self._scope.get_parent() is not None:
@@ -153,17 +156,11 @@ class CallChecker(AstWalker):
                 
     def _check_arguments(self, args, func_entry, scope):
         num_args = len(args.get_children())
-        min_num_params = func_entry.get_min_num_params()
-        if min_num_params > num_args:
-            error = "{}: '{}' requires at least {} arguments".format(
-                scope.get_full_name(), func_entry.get_name(), min_num_params)
+        arity = func_entry.find_matching_arity(num_args)
+        if not arity:
+            error = "{}: no version of {} exists that accepts {} arguments".format(
+                scope.get_full_name(), func_entry.get_name(), num_args)
             self._errors.append(error)
-        else:
-            max_num_params = func_entry.get_max_num_params()
-            if max_num_params is not None and max_num_params < num_args:
-                error = "{}: '{}' must not be called with more than {} arguments".format(
-                    scope.get_full_name(), func_entry.get_name(), max_num_params)
-                self._errors.append(error)
                         
 
 class Analyzer(object):

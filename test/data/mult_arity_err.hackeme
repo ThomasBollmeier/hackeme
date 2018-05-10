@@ -1,0 +1,8 @@
+(define (greet prefix name suffix)
+  #true)
+  
+(define (greet name suffix)
+  #true)
+  
+(greet "Hallo")
+(greet "Hallo" "Thomas")

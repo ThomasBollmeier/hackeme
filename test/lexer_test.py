@@ -17,7 +17,7 @@ class LexerTest(unittest.TestCase):
     
     def test_ok(self):
         
-        f = open("demo.hackeme")
+        f = open("data/demo.hackeme")
         code = f.read()
         f.close()
                 
