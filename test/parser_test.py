@@ -38,6 +38,16 @@ class ParserTest(unittest.TestCase):
         fundefs = ast.find_children_by_name('fundef')
         self.assertEqual(len(fundefs), 3)
         
+    def test_arities(self):
+
+        f = open("data/mult_arity.hackeme")
+        code = f.read()
+        f.close()
+       
+        ast = self.parser.parse(code)
+        self.assertTrue(ast)
+        
+        print(ast.to_xml())
 
 if __name__ == "__main__":
     

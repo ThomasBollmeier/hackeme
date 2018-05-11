@@ -18,20 +18,20 @@ class DefinitionFinder(object):
             self._scope.add(SymtabEntry(name, self._var_kind()))
         elif ast.name == "fundef":
             name = ast.get_attr('name')
-            func_entry = self._scope.get_entry(name, search_in_parents = False)
-            if not func_entry:
-                func_entry = FuncEntry(name, self._var_kind())
-                self._scope.add(func_entry)
-            self._curr_arity = func_entry.create_arity()
-            # a function definition creates a new scope
-            self._scope = self._scope_mgr.new_scope(self._scope, name)
+            self._scope.add(FuncEntry(name, self._var_kind()))
+        elif ast.name == "arity":
+            func_name = ast.get_parent().get_attr('name')
+            func = self._scope.get_entry(func_name)
+            self._curr_arity = func.create_arity()
+            # a function arity creates a new scope
+            self._scope = self._scope_mgr.new_scope(self._scope, func_name)
             ast.set_attr('x-scope', self._scope.get_scope_id())
             self._set_tail_pos_info(ast)
     
     def exit_node(self, ast):
-        if ast.name == "fundef":
-            self._scope = self._scope.get_parent()
+        if ast.name == "arity":
             self._curr_arity = None
+            self._scope = self._scope.get_parent()
     
     def visit_node(self, ast):
         if ast.name == "parameter":
@@ -45,9 +45,9 @@ class DefinitionFinder(object):
         else:
             return Kind.GLOBAL_VAR
         
-    def _set_tail_pos_info(self, fundef):
-        func_name = fundef.get_attr("name")
-        body = fundef.find_children_by_name("body")[0]
+    def _set_tail_pos_info(self, arity):
+        func_name = arity.get_parent().get_attr("name")
+        body = arity.find_children_by_name("body")[0]
         last_expr = body.get_children()[-1]
         self._set_tail_pos_info_in_expr(last_expr, func_name)
         
