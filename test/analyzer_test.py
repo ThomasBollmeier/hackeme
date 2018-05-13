@@ -28,7 +28,7 @@ class AnalyzerTest(unittest.TestCase):
         self.assertTrue(ast)
         
         if self.analyzer.analyze(ast):
-            print(ast.to_xml())
+            pass #print(ast.to_xml())
         else:
             errors = self.analyzer.get_errors()
             for error in errors:
@@ -84,6 +84,21 @@ class AnalyzerTest(unittest.TestCase):
         
         for error in errors:
             print(error)
+
+    def test_varargs(self):
+
+        f = open("data/varargs.hackeme")
+        code = f.read()
+        f.close()
+        
+        ast = self.parser.parse(code)
+        self.assertTrue(ast)
+        
+        result = self.analyzer.analyze(ast)
+        self.assertTrue(result)
+       
+        print(ast.to_xml())
+
 
 if __name__ == "__main__":
     

@@ -71,13 +71,19 @@ class FuncArity(object):
         return self._num_params
     
     def get_min_num_params(self):
-        return self._num_params
+        if not self._has_var_arg:
+            return self._num_params
+        else:
+            return self._num_params - 1
     
     def get_max_num_params(self):
         if not self._has_var_arg:
             return self._num_params
         else:
             return None
+        
+    def has_var_arg(self):
+        return self._has_var_arg
         
     def set_var_arg_support(self):
         self._has_var_arg = True

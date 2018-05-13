@@ -1,0 +1,4 @@
+(define (println xs*)
+    #true)
+    
+(println "Hallo" " Welt" "!")

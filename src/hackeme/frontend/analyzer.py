@@ -1,3 +1,4 @@
+from komparse.ast import Ast
 from .scope_manager import ScopeManager
 from .symtab_entry import Kind, SymtabEntry, FuncEntry, \
     ParamEntry, VarArgEntry
@@ -157,11 +158,25 @@ class CallChecker(AstWalker):
     def _check_arguments(self, args, func_entry, scope):
         num_args = len(args.get_children())
         arity = func_entry.find_matching_arity(num_args)
-        if not arity:
+        if arity:
+            if arity.has_var_arg():
+                self._group_varargs_in_list(args, arity)
+        else:
             error = "{}: no version of {} exists that accepts {} arguments".format(
                 scope.get_full_name(), func_entry.get_name(), num_args)
             self._errors.append(error)
-                        
+            
+    def _group_varargs_in_list(self, args, arity):
+        num_fixed_params = arity.get_min_num_params()
+        arguments = args.get_children()
+        args.remove_children()
+        for fixed_argument in arguments[:num_fixed_params]:
+            args.add_child(fixed_argument)
+        var_args = Ast("list")
+        args.add_child(var_args)
+        for var_argument in arguments[num_fixed_params:]:
+            var_args.add_child(var_argument)
+        
 
 class Analyzer(object):
     
