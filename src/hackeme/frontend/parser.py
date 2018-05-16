@@ -3,7 +3,6 @@ from komparse.ast import Ast
 from .grammar import Grammar
 
 def make_parser():
-    #return Parser(Grammar())
     return _HackemeParser()
 
 class _HackemeParser(Parser):

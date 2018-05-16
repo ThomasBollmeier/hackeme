@@ -195,3 +195,6 @@ class Analyzer(object):
        
     def get_errors(self):
         return self._errors
+    
+    def get_scope_manager(self):
+        return self._scope_mgr
