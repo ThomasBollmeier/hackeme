@@ -1,2 +1,2 @@
-# hackeme-native
-A LISP like language that compiles to various target languages (Javascript, Assembly, etc.)
+# hackeme
+A LISP like language that compiles to various target languages (C and others)
