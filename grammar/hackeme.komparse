@@ -1,0 +1,70 @@
+-- Grammar for Hackeme Language
+-- Author: Thomas Bollmeier <entwickler@tbollmeier.de>
+-- Version: 1.0.0
+
+-- Tokens
+        
+comment ';' '\n';
+comment '##|' '|##';
+
+string '"' '"' '\\';
+
+token LIST_BEGIN '\#'\(';
+token LPAR '\(';
+token RPAR '\)';
+token LSQBR '\[';
+token RSQBR '\]';
+token PLUS '\+';
+token MINUS '\-';
+token MULT '\*';
+token DIV '/';
+token MOD '%';
+token EQ '=';
+token NE '<>';
+token GT '>';
+token GE '>=';
+token LT '<';
+token LE '<=';
+token IDENT '[a-z][a-z0-9]*(-[a-z0-9]+)*[!?]?';
+token VARARG '[a-z][a-z0-9]*(-[a-z0-9]+)*\*';
+token NUMBER '\d+';
+token BOOLEAN '#t(rue)?|#f(alse)?';
+
+-- Rules
+
+@start
+start -> (definition | expr)*;
+
+definition -> vardef | fundef;
+
+vardef -> LPAR 'define' name#IDENT value#expr RPAR;
+
+fundef -> LPAR 'define' 
+    LPAR name#IDENT param#IDENT* vararg#VARARG? RPAR 
+    localdef#definition*
+    body#expr+
+    RPAR;
+
+expr -> no_list | list;
+
+no_list -> if_expr | cond_expr | call | IDENT 
+    | NUMBER | boolean | STRING;
+
+if_expr -> LPAR 'if' test#expr 
+    consequent#expr alternate#expr RPAR;
+
+cond_expr -> LPAR 'cond' branch#cond_branch+ RPAR;
+
+cond_branch -> LSQBR test#expr consequent#expr RSQBR;
+
+call -> LPAR (callee#IDENT | callee#call | callee#operator) 
+    arg#expr* RPAR;
+
+operator -> PLUS | MINUS | MULT | DIV | MOD
+    | EQ | NE | GT | GE | LT | LE;
+
+boolean -> BOOLEAN;
+
+list -> LIST_BEGIN li#list_item+ RPAR;
+
+list_item -> LPAR li#list_item+ RPAR | single#no_list;

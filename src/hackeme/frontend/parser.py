@@ -1,17 +1,16 @@
-from komparse.parser import Parser
 from komparse.ast import Ast
-from .grammar import Grammar
+from .hackeme_parser import HackemeParser
 
 def make_parser():
     return _HackemeParser()
 
-class _HackemeParser(Parser):
+class _HackemeParser(HackemeParser):
     
     def __init__(self):
-        Parser.__init__(self, Grammar())
+        HackemeParser.__init__(self)
         
     def parse(self, source):
-        ast = Parser.parse(self, source)
+        ast = HackemeParser.parse(self, source)
         if ast:
             arity_grouping = ArityGrouping()
             ast.walk(arity_grouping)

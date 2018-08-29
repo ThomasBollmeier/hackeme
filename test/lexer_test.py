@@ -3,17 +3,19 @@ import unittest
 
 sys.path.insert(0, "../src")
 
-from hackeme.frontend.parser import make_parser
+from hackeme.frontend.hackeme_parser import HackemeParser
+from komparse.scanner import Scanner
+from komparse.char_stream import StringStream
 
 class LexerTest(unittest.TestCase):
     
     def setUp(self):
         
-        self.lexer = make_parser()._scanner
+        self.grammar = HackemeParser()._grammar
         
     def tearDown(self):
         
-        self.lexer = None
+        self.grammar = None
     
     def test_ok(self):
         
@@ -21,10 +23,10 @@ class LexerTest(unittest.TestCase):
         code = f.read()
         f.close()
                 
-        stream = self.lexer.find_tokens(code)
+        scanner = Scanner(StringStream(code), self.grammar)
         
-        while stream.has_next():
-            token = stream.advance()
+        while scanner.has_next():
+            token = scanner.advance()
             print(token)
             
 

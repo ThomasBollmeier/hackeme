@@ -1,15 +1,18 @@
 import sys
 import unittest
+import os
 
-sys.path.insert(0, "../src")
+srcdir = os.path.abspath(os.path.dirname(__file__))
+srcdir += os.sep + ".." + os.sep + "src"
+sys.path.insert(0, srcdir)
 
-from hackeme.frontend.parser import make_parser
+from hackeme.frontend.hackeme_parser import HackemeParser
 
 class ParserTest(unittest.TestCase):
     
     def setUp(self):
         
-        self.parser = make_parser()
+        self.parser = HackemeParser()
         
     def tearDown(self):
         
