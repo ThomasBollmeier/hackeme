@@ -7,7 +7,7 @@ class CodeGenerator(object):
         
     def gen_expr(self, ast):
         if ast.name == "list":
-            gen_list(self, ast)
+            self.gen_list(ast)
             
     def gen_list(self, lst):
         raise NotImplementedError

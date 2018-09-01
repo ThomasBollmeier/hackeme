@@ -2,14 +2,24 @@ from .hackeme_parser import HackemeParser
 from .analyzer import Analyzer
 
 def make_parser():
+    """
+    () -> HackemeParser
+
+    Create a syntax parser for the Hackeme language
+    """
     return HackemeParser()
 
 def make_analyzer():
+    """
+    () -> Analyzer
+
+    Create an analyzer
+    """
     return Analyzer()
 
 def parse_analyze(source):
     """
-    (str) -> (AST, [str])
+    (str) -> (AST, [str], ScopeManager)
     
     Parse and analyze source
     
