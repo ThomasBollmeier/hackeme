@@ -3,15 +3,14 @@ import unittest
 
 sys.path.insert(0, "../src")
 
-from hackeme.frontend.parser import make_parser
-from hackeme.frontend.analyzer import Analyzer
+from hackeme.frontend import make_parser, make_analyzer
 
 class AnalyzerTest(unittest.TestCase):
     
     def setUp(self):
         
         self.parser = make_parser()
-        self.analyzer = Analyzer()
+        self.analyzer = make_analyzer()
         
     def tearDown(self):
         

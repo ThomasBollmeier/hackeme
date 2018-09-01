@@ -9,7 +9,7 @@ class AnalyzerTest(unittest.TestCase):
     
     def test_ok(self):
         
-        ast, errors, scope_mgr = parse_analyze(self._read_code("data/simple.hackeme"))
+        ast, errors, _ = parse_analyze(self._read_code("data/simple.hackeme"))
         
         self.assertTrue(ast)
         self.assertFalse(errors)
@@ -18,7 +18,7 @@ class AnalyzerTest(unittest.TestCase):
         
     def test_not_ok(self):
         
-        ast, errors, scope_mgr = parse_analyze(self._read_code("data/demo_err.hackeme"))
+        ast, errors, _ = parse_analyze(self._read_code("data/demo_err.hackeme"))
         
         self.assertFalse(ast)
         self.assertTrue(errors)
