@@ -1,2 +1,3 @@
 # hackeme
-A LISP like language that compiles to various target languages (C and others)
+A LISP like language that compiles to machine code
+for the Hack platform (from Coursera course "From NAND to Tetris").
